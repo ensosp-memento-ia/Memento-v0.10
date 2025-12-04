@@ -89,5 +89,38 @@
 
   <script type="module" src="./src/ui/uiScan.js"></script>
 
+  <!-- ✅ Détection paramètre URL au chargement -->
+  <script type="module">
+    import { decodeFiche } from "./src/core/compression.js";
+
+    // Vérifier si une fiche est passée en paramètre
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ficheParam = urlParams.get('fiche');
+      
+      if (ficheParam) {
+        console.log("🔗 Fiche détectée dans l'URL, chargement automatique...");
+        
+        try {
+          // Décoder Base64 URL-safe
+          const normalizedData = ficheParam
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          // Décoder la fiche
+          const fiche = decodeFiche(normalizedData);
+          
+          // Stocker temporairement
+          window.autoLoadFiche = fiche;
+          
+          console.log("✅ Fiche pré-chargée depuis URL");
+        } catch (e) {
+          console.error("❌ Erreur décodage fiche URL :", e);
+          alert("⚠️ Le lien utilisé semble invalide ou corrompu.");
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
