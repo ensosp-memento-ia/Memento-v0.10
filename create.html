@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mémento IA – ENSOSP | Création de fiche</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Police Inter -->
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+  <!-- Styles ENSOSP -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Lib compression / QR code -->
+  <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ========================================================= -->
+  <!-- BARRE D'ONGLETS -->
+  <!-- ========================================================= -->
+  <nav class="tabs">
+    <a href="index.html" class="tab">🏠 Accueil</a>
+    <a href="scan.html" class="tab">📷 Lecture QR</a>
+    <a class="tab active">📝 Création</a>
+  </nav>
+
+  <!-- ========================================================= -->
+  <!-- NAVIGATION RAPIDE SECTIONS -->
+  <!-- ========================================================= -->
+  <nav class="section-nav">
+    <a href="#section-meta" class="nav-btn">📋 Info</a>
+    <a href="#section-ai" class="nav-btn">🤖 IA</a>
+    <a href="#section-vars" class="nav-btn">🔢 Vars</a>
+    <a href="#section-prompt" class="nav-btn">✏️ Prompt</a>
+    <a href="#section-qr" class="nav-btn">📱 QR</a>
+  </nav>
+
+  <main>
+
+    <h1 class="page-title">Création de fiche opérationnelle IA</h1>
+
+    <!-- Bouton réinitialiser -->
+    <button id="btnReset" class="btn-reset">🔄 Réinitialiser tout</button>
+
+    <!-- ========================================================= -->
+    <!-- SECTION METADONNÉES -->
+    <!-- ========================================================= -->
+    <section class="card" id="section-meta">
+      <h2>1. Métadonnées de la fiche</h2>
+
+      <label>Catégorie
+        <input id="meta_categorie" type="text" placeholder="Ex : Risque chimique">
+      </label>
+
+      <label>Titre de la fiche
+        <input id="meta_titre" type="text" placeholder="Ex : Analyse initiale site RCH">
+      </label>
+
+      <label>Objectif
+        <input id="meta_objectif" type="text" placeholder="Ex : Aide RCH3/RCH4 analyse rapide">
+      </label>
+
+      <label>Concepteur
+        <input id="meta_concepteur" type="text" placeholder="Ex : Cdt Tirelle">
+      </label>
+
+      <label>Version
+        <input id="meta_version" type="text" placeholder="Ex : 1.0" value="1.0">
+      </label>
+
+      <label>Date de mise à jour
+        <input id="meta_date" type="date">
+      </label>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- INDICES DE CONFIANCE IA -->
+    <!-- ========================================================= -->
+    <section class="card" id="section-ai">
+      <h2>2. Indices de confiance IA</h2>
+
+      <label>ChatGPT
+        <select id="aiChatGPT" class="indice-confiance">
+          <option value="3">3 - Recommandée</option>
+          <option value="2">2 - Acceptable</option>
+          <option value="1">1 - Non recommandée</option>
+        </select>
+      </label>
+
+      <label>Perplexity
+        <select id="aiPerplexity" class="indice-confiance">
+          <option value="3">3 - Recommandée</option>
+          <option value="2">2 - Acceptable</option>
+          <option value="1">1 - Non recommandée</option>
+        </select>
+      </label>
+
+      <label>Mistral
+        <select id="aiMistral" class="indice-confiance">
+          <option value="3">3 - Recommandée</option>
+          <option value="2">2 - Acceptable</option>
+          <option value="1">1 - Non recommandée</option>
+        </select>
+      </label>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VARIABLES -->
+    <!-- ========================================================= -->
+    <section class="card" id="section-vars">
+      <h2>3. Variables du prompt (max 10)</h2>
+
+      <p class="helper">
+        Variable ID <b>code_onu</b> → <code>{{code_onu}}</code> dans le prompt
+      </p>
+
+      <div id="variablesContainer"></div>
+
+      <button id="btnAddVariable" class="btn-add-var">➕ Ajouter une variable</button>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- PROMPT -->
+    <!-- ========================================================= -->
+    <section class="card" id="section-prompt">
+      <h2>4. Rédaction du prompt</h2>
+      <p class="helper">
+        Limite : <strong>4000 caractères</strong> après compactage.<br>
+        Utilisez les variables avec <code>{{identifiant}}</code>.
+      </p>
+
+      <textarea id="prompt_input" rows="10" placeholder="Rédigez le prompt ici…"></textarea>
+      <div id="prompt_count" class="counter">0 / 4000</div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- GENERATION DU QR CODE -->
+    <!-- ========================================================= -->
+    <section class="card" id="section-qr">
+      <h2>5. Génération du QR Code</h2>
+
+      <button id="btnGenerate" class="btn-generate">🚀 Générer JSON + QR code</button>
+
+      <div id="qrContainer" class="qr-box"></div>
+    </section>
+
+  </main>
+
+
+  <!-- ========================================================= -->
+  <!-- SCRIPTS UI -->
+  <!-- ========================================================= -->
+  <script type="module" src="./src/ui/createFiche.js"></script>
+
+</body>
+</html>
