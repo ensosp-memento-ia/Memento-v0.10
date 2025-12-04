@@ -10,7 +10,20 @@ import { encodeFiche } from "./compression.js";
  * @param {string} baseUrl - URL de base de l'application
  * @returns {string} URL complète avec paramètres
  */
-export function generateFicheUrl(fiche, baseUrl = window.location.origin) {
+export function generateFicheUrl(fiche, baseUrl = null) {
+  // ✅ CORRECTION : Construction correcte de l'URL de base
+  if (!baseUrl) {
+    const origin = window.location.origin;
+    const pathname = window.location.pathname;
+    
+    // Supprimer le nom du fichier pour garder seulement le dossier
+    const directory = pathname.substring(0, pathname.lastIndexOf('/'));
+    
+    baseUrl = origin + directory;
+  }
+  
+  console.log("🌐 URL de base détectée :", baseUrl);
+  
   // Encoder la fiche
   const encoded = encodeFiche(fiche);
   
