@@ -34,6 +34,18 @@ let scanner = null;
 const btnResetScan = document.getElementById("btnResetScan");
 
 // ------------------------------------------------------------------------
+// ✅ CHARGEMENT AUTOMATIQUE si fiche dans URL
+// ------------------------------------------------------------------------
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.autoLoadFiche) {
+    console.log("🔗 Chargement automatique de la fiche depuis URL");
+    setTimeout(() => {
+      onFicheDecoded(window.autoLoadFiche);
+    }, 500); // Petit délai pour s'assurer que le DOM est prêt
+  }
+});
+
+// ------------------------------------------------------------------------
 // Cleanup systématique du scanner
 // ------------------------------------------------------------------------
 async function cleanupScanner() {
