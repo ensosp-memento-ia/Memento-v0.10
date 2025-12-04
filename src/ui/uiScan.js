@@ -1,9 +1,16 @@
 // ========================================================================
 // uiScan.js — Lecture + exploitation de fiche IA RCH
 // VERSION FINALE : affichage métadonnées condensé
+// ⚠️ CE FICHIER NE DOIT S'EXÉCUTER QUE SUR scan.html
 // ========================================================================
 
 import { decodeFiche } from "../core/compression.js";
+
+// ✅ PROTECTION : Vérifier qu'on est bien sur scan.html
+if (!window.location.pathname.includes('scan.html')) {
+  console.warn("⚠️ uiScan.js chargé sur une mauvaise page, arrêt du script");
+  throw new Error("uiScan.js ne doit être chargé que sur scan.html");
+}
 
 // ---------- Sections ----------
 const sectionScan   = document.getElementById("sectionScan");
