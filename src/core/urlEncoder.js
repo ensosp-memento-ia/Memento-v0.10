@@ -1,5 +1,6 @@
 // ======================================================
 // urlEncoder.js — Encodage fiche vers URL cliquable
+// VERSION FORCÉE pour ensosp-memento-ia.github.io
 // ======================================================
 
 import { encodeFiche } from "./compression.js";
@@ -11,18 +12,30 @@ import { encodeFiche } from "./compression.js";
  * @returns {string} URL complète avec paramètres
  */
 export function generateFicheUrl(fiche, baseUrl = null) {
-  // ✅ CORRECTION : Construction correcte de l'URL de base
+  // ✅ CORRECTION : URL forcée pour votre site
   if (!baseUrl) {
+    // Détection automatique
     const origin = window.location.origin;
     const pathname = window.location.pathname;
     
-    // Supprimer le nom du fichier pour garder seulement le dossier
-    const directory = pathname.substring(0, pathname.lastIndexOf('/'));
+    console.log("🔍 Debug URL :");
+    console.log("  - origin:", origin);
+    console.log("  - pathname:", pathname);
     
-    baseUrl = origin + directory;
+    // Si on est sur GitHub Pages ensosp-memento-ia
+    if (origin.includes("ensosp-memento-ia.github.io")) {
+      // Forcer l'URL complète
+      baseUrl = "https://ensosp-memento-ia.github.io/Memento-v0.10";
+      console.log("  ✅ URL forcée (ENSOSP) :", baseUrl);
+    } else {
+      // Détection automatique pour autres cas
+      const directory = pathname.substring(0, pathname.lastIndexOf('/'));
+      baseUrl = origin + directory;
+      console.log("  ✅ URL détectée (auto) :", baseUrl);
+    }
   }
   
-  console.log("🌐 URL de base détectée :", baseUrl);
+  console.log("🌐 URL de base utilisée :", baseUrl);
   
   // Encoder la fiche
   const encoded = encodeFiche(fiche);
@@ -36,7 +49,7 @@ export function generateFicheUrl(fiche, baseUrl = null) {
   // Construire l'URL
   const url = `${baseUrl}/scan.html?fiche=${encodeURIComponent(urlSafeData)}`;
   
-  console.log("🔗 URL générée :", url);
+  console.log("🔗 URL complète générée :", url);
   console.log("📏 Longueur URL :", url.length);
   
   // Avertissement si URL trop longue
