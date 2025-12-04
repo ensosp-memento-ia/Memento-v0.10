@@ -36,13 +36,21 @@ const btnResetScan = document.getElementById("btnResetScan");
 // ------------------------------------------------------------------------
 // ✅ CHARGEMENT AUTOMATIQUE si fiche dans URL
 // ------------------------------------------------------------------------
-window.addEventListener('DOMContentLoaded', () => {
-  if (window.autoLoadFiche) {
-    console.log("🔗 Chargement automatique de la fiche depuis URL");
-    setTimeout(() => {
-      onFicheDecoded(window.autoLoadFiche);
-    }, 500); // Petit délai pour s'assurer que le DOM est prêt
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("📱 Page scan.html chargée");
+  
+  // Attendre que window.autoLoadFiche soit défini (si présent)
+  setTimeout(() => {
+    if (window.autoLoadFiche) {
+      console.log("🔗 Chargement automatique de la fiche depuis URL");
+      try {
+        onFicheDecoded(window.autoLoadFiche);
+      } catch (e) {
+        console.error("❌ Erreur chargement auto fiche :", e);
+        alert("⚠️ Erreur lors du chargement automatique de la fiche.");
+      }
+    }
+  }, 500);
 });
 
 // ------------------------------------------------------------------------
