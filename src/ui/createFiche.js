@@ -139,12 +139,57 @@ async function onGenerate() {
             successMsg.style.marginTop = "15px";
             successMsg.textContent = "✅ QR Code généré avec succès !";
             qrContainer.appendChild(successMsg);
+
+            // ✅ Génération du lien cliquable
+            generateClickableLink(fiche);
+
         }
         catch (err) {
             alert("❌ Erreur génération QR : " + err.message);
             console.error("Erreur QR :", err);
             qrContainer.innerHTML = "<p style='color:#ff4d4d;'>❌ Erreur lors de la génération</p>";
         }
+    }
+}
+
+// ================================================================
+// ✅ NOUVELLE FONCTION : Génération lien cliquable
+// ================================================================
+function generateClickableLink(fiche) {
+    const linkContainer = document.getElementById("linkContainer");
+    const urlInput = document.getElementById("ficheUrl");
+    const btnCopy = document.getElementById("btnCopyLink");
+
+    if (!linkContainer || !urlInput) return;
+
+    try {
+        // Générer l'URL
+        const ficheUrl = generateFicheUrl(fiche);
+        
+        // Afficher le lien
+        urlInput.value = ficheUrl;
+        linkContainer.style.display = "block";
+
+        // Bouton copier
+        if (btnCopy) {
+            btnCopy.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(ficheUrl);
+                    btnCopy.textContent = "✅ Lien copié !";
+                    setTimeout(() => {
+                        btnCopy.textContent = "📋 Copier le lien";
+                    }, 2000);
+                } catch (e) {
+                    alert("❌ Impossible de copier : " + e.message);
+                }
+            };
+        }
+
+        console.log("🔗 Lien cliquable généré :", ficheUrl);
+
+    } catch (e) {
+        console.error("❌ Erreur génération lien :", e);
+        linkContainer.style.display = "none";
     }
 }
 
