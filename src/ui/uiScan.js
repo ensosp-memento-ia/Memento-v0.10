@@ -1,9 +1,16 @@
 // ========================================================================
 // uiScan.js — Lecture + exploitation de fiche IA RCH
 // VERSION FINALE : affichage métadonnées condensé
+// ⚠️ CE FICHIER NE DOIT S'EXÉCUTER QUE SUR scan.html
 // ========================================================================
 
 import { decodeFiche } from "../core/compression.js";
+
+// ✅ PROTECTION : Vérifier qu'on est bien sur scan.html
+if (!window.location.pathname.includes('scan.html')) {
+  console.warn("⚠️ uiScan.js chargé sur une mauvaise page, arrêt du script");
+  throw new Error("uiScan.js ne doit être chargé que sur scan.html");
+}
 
 // ---------- Sections ----------
 const sectionScan   = document.getElementById("sectionScan");
@@ -32,6 +39,26 @@ let scanner = null;
 
 // Bouton reset
 const btnResetScan = document.getElementById("btnResetScan");
+
+// ------------------------------------------------------------------------
+// ✅ CHARGEMENT AUTOMATIQUE si fiche dans URL
+// ------------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("📱 Page scan.html chargée");
+  
+  // Attendre que window.autoLoadFiche soit défini (si présent)
+  setTimeout(() => {
+    if (window.autoLoadFiche) {
+      console.log("🔗 Chargement automatique de la fiche depuis URL");
+      try {
+        onFicheDecoded(window.autoLoadFiche);
+      } catch (e) {
+        console.error("❌ Erreur chargement auto fiche :", e);
+        alert("⚠️ Erreur lors du chargement automatique de la fiche.");
+      }
+    }
+  }, 500);
+});
 
 // ------------------------------------------------------------------------
 // Cleanup systématique du scanner
