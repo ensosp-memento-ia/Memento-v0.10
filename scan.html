@@ -26,14 +26,21 @@
   <main>
     <h1 class="page-title">Lecture fiche IA</h1>
 
-    <!-- BOUTON RESET -->
-    <div style="text-align: center; margin-bottom: 15px;">
+    <!-- BOUTON RESET + BOUTON FEEDBACK -->
+    <div style="text-align: center; margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
       <button id="btnResetScan" class="btn-reset-scan" style="display:none;">
         🔄 Scanner une nouvelle fiche
       </button>
+      
+      <a href="https://forms.gle/aYrm1fRgY6GvKqdu7" 
+         target="_blank" 
+         class="btn-feedback"
+         style="display: inline-block; padding: 12px 24px; background: #ff9f1c; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; transition: 0.2s;">
+        💬 Retour utilisateur
+      </a>
     </div>
 
-    <!-- AVERTISSEMENT IA -->
+    <!-- ⚠️ AVERTISSEMENT IA -->
     <div style="background:#fff3cd;border-left:4px solid #ff9f1c;padding:10px 12px;margin-bottom:15px;border-radius:8px;color:#856404;font-size:13px;">
       <strong style="display:block;margin-bottom:4px;color:#001F8F;font-size:14px;">⚠️ Avertissement</strong>
       L'IA peut faire des erreurs. Veuillez vérifier les réponses et exercer votre jugement professionnel avant toute action opérationnelle.
@@ -46,15 +53,17 @@
       <button id="btnStartCam" class="btn-add-var">🎥 Scanner via caméra</button>
       <button id="btnStopCam" class="btn-reset" disabled>Arrêter</button>
 
+      <!-- Masqué par défaut -->
       <div id="videoContainer" style="display:none;margin-top:15px;">
         <video id="qrVideo" style="width:100%;background:#000;border-radius:12px;"></video>
       </div>
 
       <h3>Ou importer une image</h3>
       <input type="file" id="qrFileInput" accept="image/*">
+      <pre id="qrRaw" style="display:none;"></pre>
     </section>
 
-    <!-- METADONNEES ✅ SANS TITRE -->
+    <!-- METADONNEES - SANS TITRE H2, juste le conteneur -->
     <section class="card" id="sectionMeta" style="display:none;">
       <div id="metaHeader" class="meta-box"></div>
     </section>
@@ -87,40 +96,24 @@
 
   </main>
 
-  <script type="module" src="./src/ui/uiScan.js"></script>
+  <style>
+    /* Style spécifique pour le bouton feedback */
+    .btn-feedback:hover {
+      background: #ffb84d !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 159, 28, 0.3);
+    }
 
-  <!-- ✅ Détection paramètre URL au chargement -->
-  <script type="module">
-    import { decodeFiche } from "./src/core/compression.js";
-
-    // Vérifier si une fiche est passée en paramètre
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const ficheParam = urlParams.get('fiche');
-      
-      if (ficheParam) {
-        console.log("🔗 Fiche détectée dans l'URL, chargement automatique...");
-        
-        try {
-          // Décoder Base64 URL-safe
-          const normalizedData = ficheParam
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-          
-          // Décoder la fiche
-          const fiche = decodeFiche(normalizedData);
-          
-          // Stocker temporairement
-          window.autoLoadFiche = fiche;
-          
-          console.log("✅ Fiche pré-chargée depuis URL");
-        } catch (e) {
-          console.error("❌ Erreur décodage fiche URL :", e);
-          alert("⚠️ Le lien utilisé semble invalide ou corrompu.");
-        }
+    /* Responsive pour petits écrans */
+    @media (max-width: 600px) {
+      .btn-feedback {
+        font-size: 13px !important;
+        padding: 10px 20px !important;
       }
-    });
-  </script>
+    }
+  </style>
+
+  <script type="module" src="./src/ui/uiScan.js"></script>
 
 </body>
 </html>
