@@ -1,280 +1,168 @@
-// ========================================================================
-// uiScan.js — Lecture + exploitation de fiche IA RCH
-// VERSION FINALE : affichage métadonnées condensé
-// ⚠️ CE FICHIER NE DOIT S'EXÉCUTER QUE SUR scan.html
-// ========================================================================
+// ======================================================================
+// uiScan.js – Interface complète de lecture + exploitation de fiche
+// Version corrigée : gestion améliorée de l'import de fichier QR
+// ======================================================================
 
 import { decodeFiche } from "../core/compression.js";
+import { buildFullPrompt } from "../core/variables.js";
 
-// ✅ PROTECTION : Vérifier qu'on est bien sur scan.html
-if (!window.location.pathname.includes('scan.html')) {
-  console.warn("⚠️ uiScan.js chargé sur une mauvaise page, arrêt du script");
-  throw new Error("uiScan.js ne doit être chargé que sur scan.html");
-}
-
-// ---------- Sections ----------
-const sectionScan   = document.getElementById("sectionScan");
-const sectionMeta   = document.getElementById("sectionMeta");
-const sectionVars   = document.getElementById("sectionVars");
-const sectionExtra  = document.getElementById("sectionExtra");
-const sectionPrompt = document.getElementById("sectionPrompt");
-
-// ---------- Éléments principaux ----------
-const metaHeader    = document.getElementById("metaHeader");
-const scanVariables = document.getElementById("scanVariables");
-const extraInput    = document.getElementById("extra_input");
-const promptResult  = document.getElementById("promptResult");
-const aiButtons     = document.getElementById("aiButtons");
-
-// Caméra / fichier
-const btnStartCam   = document.getElementById("btnStartCam");
-const btnStopCam    = document.getElementById("btnStopCam");
-const videoContainer= document.getElementById("videoContainer");
-const videoEl       = document.getElementById("qrVideo");
-const fileInput     = document.getElementById("qrFileInput");
-
-// Stockage de la fiche courante + scanner
-window.currentFiche = null;
 let scanner = null;
+let currentFiche = null;
+window.currentFiche = null;
 
-// Bouton reset
-const btnResetScan = document.getElementById("btnResetScan");
-
-// ------------------------------------------------------------------------
-// ✅ CHARGEMENT AUTOMATIQUE si fiche dans URL
-// ------------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  console.log("📱 Page scan.html chargée");
-  
-  // Attendre que window.autoLoadFiche soit défini (si présent)
-  setTimeout(() => {
-    if (window.autoLoadFiche) {
-      console.log("🔗 Chargement automatique de la fiche depuis URL");
-      try {
-        onFicheDecoded(window.autoLoadFiche);
-      } catch (e) {
-        console.error("❌ Erreur chargement auto fiche :", e);
-        alert("⚠️ Erreur lors du chargement automatique de la fiche.");
-      }
-    }
-  }, 500);
-});
-
-// ------------------------------------------------------------------------
-// Cleanup systématique du scanner
-// ------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Cleanup du scanner (stop + destroy)
+// -----------------------------------------------------------------------
 async function cleanupScanner() {
-  if (!scanner) return;
-
-  console.log("🧹 Nettoyage scanner...");
-  
-  try {
-    await scanner.stop();
-  } catch (e) {
-    console.warn("⚠️ Erreur arrêt scanner :", e);
-  }
-
-  try {
-    scanner.destroy();
-  } catch (e) {
-    console.warn("⚠️ Erreur destruction scanner :", e);
-  } finally {
+  if (scanner) {
+    console.log("🧹 Nettoyage scanner...");
+    try {
+      await scanner.stop();
+      scanner.destroy();
+    } catch (e) {
+      console.warn("⚠️ Erreur cleanup scanner :", e);
+    }
     scanner = null;
   }
 }
 
-// ------------------------------------------------------------------------
-// Réinitialisation complète
-// ------------------------------------------------------------------------
-function resetScanPage() {
-  console.log("🔄 Réinitialisation de la page scan");
+// -----------------------------------------------------------------------
+// Éléments DOM
+// -----------------------------------------------------------------------
+const fileInput = document.getElementById("qrFileInput");
+const btnStartCam = document.getElementById("btnStartCam");
+const btnStopCam = document.getElementById("btnStopCam");
+const videoEl = document.getElementById("qrVideo");
+const videoContainer = document.getElementById("videoContainer");
 
-  cleanupScanner();
-  window.currentFiche = null;
+const sectionScan = document.getElementById("sectionScan");
+const sectionMeta = document.getElementById("sectionMeta");
+const sectionVars = document.getElementById("sectionVars");
+const sectionExtra = document.getElementById("sectionExtra");
+const sectionPrompt = document.getElementById("sectionPrompt");
 
-  if (sectionScan) sectionScan.style.display = "block";
-  if (sectionMeta) sectionMeta.style.display = "none";
-  if (sectionVars) sectionVars.style.display = "none";
-  if (sectionExtra) sectionExtra.style.display = "none";
-  if (sectionPrompt) sectionPrompt.style.display = "none";
+const metaHeader = document.getElementById("metaHeader");
+const scanVariables = document.getElementById("scanVariables");
+const extraInput = document.getElementById("extra_input");
+const promptResult = document.getElementById("promptResult");
+const aiButtons = document.getElementById("aiButtons");
 
-  if (metaHeader) metaHeader.innerHTML = "";
-  if (scanVariables) scanVariables.innerHTML = "";
-  if (extraInput) extraInput.value = "";
-  if (promptResult) promptResult.textContent = "";
-  if (aiButtons) aiButtons.innerHTML = "";
+const btnResetScan = document.getElementById("btnResetScan");
 
-  if (fileInput) fileInput.value = "";
+// -----------------------------------------------------------------------
+// FONCTION PRINCIPALE : Fiche décodée
+// -----------------------------------------------------------------------
+function onFicheDecoded(fiche) {
+  console.log("✅ Fiche décodée reçue :", fiche);
+  
+  currentFiche = fiche;
+  window.currentFiche = fiche;
 
-  if (btnResetScan) btnResetScan.style.display = "none";
+  // Afficher sections
+  if (sectionMeta) sectionMeta.style.display = "block";
+  if (sectionVars) sectionVars.style.display = "block";
+  if (sectionExtra) sectionExtra.style.display = "block";
+  if (sectionPrompt) sectionPrompt.style.display = "block";
 
-  if (btnStartCam) btnStartCam.disabled = false;
-  if (btnStopCam) btnStopCam.disabled = true;
-  if (videoContainer) videoContainer.style.display = "none";
+  // Bouton reset visible
+  if (btnResetScan) btnResetScan.style.display = "inline-block";
 
-  console.log("✅ Page réinitialisée");
+  // Remplir métadonnées
+  buildMetaHeader(fiche);
+
+  // Remplir variables
+  buildVariablesUI(fiche);
 }
 
-// ------------------------------------------------------------------------
-// Bouton Reset
-// ------------------------------------------------------------------------
-if (btnResetScan) {
-  btnResetScan.addEventListener("click", () => {
-    const confirm = window.confirm("⚠️ Voulez-vous vraiment scanner une nouvelle fiche ?\n\nLes données actuelles seront perdues.");
-    if (confirm) {
-      resetScanPage();
-    }
+// -----------------------------------------------------------------------
+// MÉTADONNÉES CONDENSÉES
+// -----------------------------------------------------------------------
+function buildMetaHeader(fiche) {
+  if (!metaHeader) return;
+
+  const m = fiche.meta || {};
+  const geo = fiche.geoloc || {};
+
+  // Titre principal
+  const titre = m.titre || "Sans titre";
+  
+  // Ligne catégorie + objectif
+  const cat = m.categorie || "";
+  const obj = m.objectif || "";
+  let subLine = [];
+  if (cat) subLine.push(cat);
+  if (obj) subLine.push(obj);
+  const subText = subLine.length > 0 ? subLine.join(" • ") : "";
+
+  // Ligne auteur + version + date
+  const concepteur = m.concepteur || "";
+  const version = m.version || "";
+  const date = m.date_maj || "";
+  let metaLine = [];
+  if (concepteur) metaLine.push(concepteur);
+  if (version) metaLine.push(`v${version}`);
+  if (date) metaLine.push(date);
+  const metaText = metaLine.length > 0 ? metaLine.join(" • ") : "";
+
+  // Géolocalisation
+  const lat = geo.latitude || "";
+  const lon = geo.longitude || "";
+  const geoText = (lat && lon) ? `📍 ${lat}, ${lon}` : "";
+
+  // Construction HTML
+  metaHeader.innerHTML = `
+    <h2 style="color:#001F8F;font-size:18px;margin:0 0 6px 0;font-weight:700;">${titre}</h2>
+    ${subText ? `<p style="margin:0 0 4px 0;font-size:14px;color:#444;">${subText}</p>` : ""}
+    ${metaText ? `<p style="margin:0 0 4px 0;font-size:13px;color:#666;">${metaText}</p>` : ""}
+    ${geoText ? `<p style="margin:0;font-size:12px;color:#888;">${geoText}</p>` : ""}
+  `;
+}
+
+// -----------------------------------------------------------------------
+// VARIABLES UI
+// -----------------------------------------------------------------------
+function buildVariablesUI(fiche) {
+  if (!scanVariables) return;
+
+  scanVariables.innerHTML = "";
+
+  const vars = fiche.variables || [];
+  if (vars.length === 0) {
+    scanVariables.innerHTML = "<p style='color:#999;'>Aucune variable à remplir.</p>";
+    return;
+  }
+
+  vars.forEach((v) => {
+    const div = document.createElement("div");
+    div.style.marginBottom = "12px";
+
+    const label = document.createElement("label");
+    label.textContent = v.label || v.id;
+    label.style.display = "block";
+    label.style.marginBottom = "4px";
+    label.style.fontWeight = "600";
+    label.style.fontSize = "14px";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = v.value || "";
+    input.dataset.varId = v.id;
+    input.placeholder = v.help || "";
+    input.style.width = "100%";
+    input.style.padding = "10px";
+    input.style.border = "2px solid #ddd";
+    input.style.borderRadius = "8px";
+    input.style.fontSize = "14px";
+
+    div.appendChild(label);
+    div.appendChild(input);
+    scanVariables.appendChild(div);
   });
 }
 
-// ------------------------------------------------------------------------
-// Quand une fiche est décodée (depuis fichier ou caméra)
-// ✅ AFFICHAGE CONDENSÉ DES MÉTADONNÉES
-// ------------------------------------------------------------------------
-function onFicheDecoded(fiche) {
-  console.log("✅ Fiche décodée :", fiche);
-
-  window.currentFiche = fiche;
-
-  // 1) Masquer la zone scan, afficher les autres
-  if (sectionScan)   sectionScan.style.display   = "none";
-  if (sectionMeta)   sectionMeta.style.display   = "block";
-  if (sectionVars)   sectionVars.style.display   = "block";
-  if (sectionExtra)  sectionExtra.style.display  = "block";
-  if (sectionPrompt) sectionPrompt.style.display = "block";
-
-  // Afficher le bouton reset
-  if (btnResetScan) btnResetScan.style.display = "block";
-
-  // 2) ✅ AFFICHAGE CONDENSÉ : Catégorie + Titre sur même ligne
-  if (metaHeader) {
-    metaHeader.style.display = "block";
-    metaHeader.innerHTML = `
-      <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-        <span style="font-weight:700;color:#001F8F;font-size:16px;">
-          ${fiche.meta?.categorie || "Catégorie non renseignée"}
-        </span>
-        <span style="font-size:18px;font-weight:600;color:#001F8F;">
-          ${fiche.meta?.titre || "Titre inconnu"}
-        </span>
-      </div>
-      <div style="font-style:italic;color:#555;font-size:14px;margin-bottom:8px;line-height:1.4;">
-        <span style="font-weight:600;">Objectif :</span> ${fiche.meta?.objectif || "-"}
-      </div>
-      <div style="font-size:13px;color:#666;line-height:1.6;">
-        ${fiche.meta?.concepteur || "Concepteur non renseigné"} • 
-        Version ${fiche.meta?.version || "1.0"} • 
-        ${fiche.meta?.date || "Date non renseignée"}
-      </div>
-    `;
-  }
-
-  // 3) Générer les champs de variables
-  if (scanVariables) {
-    scanVariables.innerHTML = "";
-    
-    (fiche.prompt?.variables || []).forEach(v => {
-      const block = document.createElement("div");
-      block.className = "var-field";
-
-      const lab = document.createElement("label");
-      lab.textContent = v.label || v.id;
-      
-      if (v.required) {
-        const req = document.createElement("span");
-        req.textContent = " *";
-        req.style.color = "#ff4d4d";
-        lab.appendChild(req);
-      }
-      
-      block.appendChild(lab);
-
-      let field;
-
-      if (v.type === "text") {
-        field = document.createElement("input");
-        field.type = "text";
-        if (v.required) field.required = true;
-      } 
-      else if (v.type === "number") {
-        field = document.createElement("input");
-        field.type = "number";
-        if (v.required) field.required = true;
-      } 
-      else if (v.type === "choice") {
-        field = document.createElement("select");
-        if (v.required) field.required = true;
-        
-        if (!v.required) {
-          const emptyOpt = document.createElement("option");
-          emptyOpt.value = "";
-          emptyOpt.textContent = "-- Sélectionner --";
-          field.appendChild(emptyOpt);
-        }
-
-        (v.options || []).forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt;
-          field.appendChild(o);
-        });
-      } 
-      else if (v.type === "geoloc") {
-        field = document.createElement("div");
-        field.innerHTML = `
-          <button class="btn-reset" id="${v.id}_gps" type="button">📍 Acquérir position</button>
-          <input id="${v.id}_lat" placeholder="Latitude" type="number" step="0.000001" ${v.required ? 'required' : ''}>
-          <input id="${v.id}_lon" placeholder="Longitude" type="number" step="0.000001" ${v.required ? 'required' : ''}>
-        `;
-        
-        setTimeout(() => {
-          const btn = document.getElementById(`${v.id}_gps`);
-          if (!btn) return;
-          
-          btn.onclick = () => {
-            btn.disabled = true;
-            btn.textContent = "⏳ Localisation...";
-            
-            navigator.geolocation.getCurrentPosition(
-              pos => {
-                const lat = document.getElementById(`${v.id}_lat`);
-                const lon = document.getElementById(`${v.id}_lon`);
-                if (lat) lat.value = pos.coords.latitude.toFixed(6);
-                if (lon) lon.value = pos.coords.longitude.toFixed(6);
-                btn.disabled = false;
-                btn.textContent = "✅ Position acquise";
-                setTimeout(() => { btn.textContent = "📍 Acquérir position"; }, 2000);
-              },
-              err => {
-                console.error("❌ Erreur GPS :", err);
-                btn.disabled = false;
-                btn.textContent = "❌ Erreur GPS";
-                alert("Erreur de géolocalisation : " + err.message);
-                setTimeout(() => { btn.textContent = "📍 Acquérir position"; }, 2000);
-              },
-              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-          };
-        }, 0);
-      } 
-      else {
-        field = document.createElement("input");
-        field.type = "text";
-      }
-
-      field.dataset.id = v.id;
-      block.appendChild(field);
-      scanVariables.appendChild(block);
-    });
-  }
-
-  if (promptResult) promptResult.textContent = "";
-  if (aiButtons) aiButtons.innerHTML = "";
-}
-
-// ------------------------------------------------------------------------
-// Lecture via FICHIER - Gestion erreur améliorée
-// ------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// LECTURE VIA FICHIER - ✅ CORRECTION DU BUG
+// -----------------------------------------------------------------------
 if (fileInput) {
   fileInput.addEventListener("change", async (ev) => {
     const file = ev.target.files[0];
@@ -283,53 +171,75 @@ if (fileInput) {
     console.log("📁 Lecture fichier QR...");
 
     try {
+      // ✅ Vérification de QrScanner
+      if (!window.QrScanner) {
+        throw new Error("QrScanner n'est pas chargé. Actualisez la page.");
+      }
+
       // ✅ Lecture avec gestion d'erreur détaillée
       const result = await window.QrScanner.scanImage(file, {
         returnDetailedScanResult: true
       });
       
-      // Extraction du texte
+      console.log("📄 Résultat brut QrScanner :", result);
+
+      // ✅ Extraction du texte (gestion multi-formats)
       let text = "";
       if (typeof result === "string") {
         text = result;
-      } else if (result && result.data) {
-        text = (typeof result.data === "string") ? result.data : JSON.stringify(result.data);
+      } else if (result && typeof result === "object") {
+        if (typeof result.data === "string") {
+          text = result.data;
+        } else if (result.data && typeof result.data === "object") {
+          // Cas iOS où data peut être un objet
+          text = JSON.stringify(result.data);
+        }
       }
       
-      console.log("📄 Texte brut QR :", text);
+      console.log("📄 Texte extrait du QR :", text);
 
-      if (!text || text.length === 0) {
-        throw new Error("QR Code vide ou illisible.");
+      // ✅ Validation du texte
+      if (!text || text.trim().length === 0) {
+        throw new Error("No QR code found");
       }
       
-      // Décodage de la fiche
-      const fiche = decodeFiche(text);
-      console.log("✅ Fiche décodée :", fiche);
+      // ✅ Décodage de la fiche avec gestion d'erreur
+      let fiche;
+      try {
+        fiche = decodeFiche(text);
+        console.log("✅ Fiche décodée avec succès :", fiche);
+      } catch (decodeError) {
+        console.error("❌ Erreur decodeFiche :", decodeError);
+        throw new Error("QR Code invalide ou corrompu");
+      }
       
       onFicheDecoded(fiche);
       
     } catch (err) {
       console.error("❌ Erreur lecture fichier :", err);
       
-      // ✅ Message d'erreur plus explicite
+      // ✅ Message d'erreur adapté
       let errorMsg = "Erreur lecture QR";
       
-      if (err.message && err.message !== "undefined") {
+      if (err.message === "No QR code found") {
+        errorMsg = "Aucun QR code détecté dans cette image";
+      } else if (err.message && err.message !== "undefined") {
         errorMsg += " : " + err.message;
-      } else if (err.toString && err.toString() !== "[object Object]") {
-        errorMsg += " : " + err.toString();
       } else {
-        errorMsg += " : Le QR Code n'a pas pu être décodé. Vérifiez qu'il a bien été généré par cette application.";
+        errorMsg = "Le QR Code n'a pas pu être décodé. Vérifiez qu'il a bien été généré par cette application.";
       }
       
       alert("❌ " + errorMsg);
+    } finally {
+      // Réinitialiser le champ file pour permettre de recharger le même fichier
+      fileInput.value = "";
     }
   });
 }
 
-// ------------------------------------------------------------------------
-// Lecture via CAMÉRA
-// ------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// LECTURE VIA CAMÉRA
+// -----------------------------------------------------------------------
 if (btnStartCam && btnStopCam && videoEl) {
   
   btnStartCam.onclick = async () => {
@@ -391,9 +301,9 @@ if (btnStartCam && btnStopCam && videoEl) {
   };
 }
 
-// ------------------------------------------------------------------------
-// Compiler le PROMPT final
-// ------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// COMPILER LE PROMPT FINAL
+// -----------------------------------------------------------------------
 const btnBuildPrompt = document.getElementById("btnBuildPrompt");
 const btnCopyPrompt  = document.getElementById("btnCopy");
 
@@ -405,67 +315,43 @@ if (btnBuildPrompt) {
       return;
     }
 
-    let missingFields = [];
-    (fiche.prompt?.variables || []).forEach(v => {
-      if (!v.required) return;
-      
-      if (v.type === "geoloc") {
-        const lat = document.getElementById(`${v.id}_lat`);
-        const lon = document.getElementById(`${v.id}_lon`);
-        if (!lat?.value || !lon?.value) {
-          missingFields.push(v.label || v.id);
-        }
-      } else {
-        const el = document.querySelector(`[data-id="${v.id}"]`);
-        if (!el?.value) {
-          missingFields.push(v.label || v.id);
-        }
-      }
+    // Récupérer valeurs des variables
+    const inputs = scanVariables.querySelectorAll("input[data-var-id]");
+    const userValues = {};
+    inputs.forEach(inp => {
+      const id = inp.dataset.varId;
+      userValues[id] = inp.value.trim();
     });
 
-    if (missingFields.length > 0) {
-      alert("⚠️ Champs requis manquants :\n- " + missingFields.join("\n- "));
-      return;
+    // Extra
+    const extra = extraInput ? extraInput.value.trim() : "";
+
+    // Construire prompt
+    const finalPrompt = buildFullPrompt(fiche, userValues, extra);
+
+    if (promptResult) {
+      promptResult.textContent = finalPrompt;
+      promptResult.style.display = "block";
     }
 
-    let prompt = fiche.prompt?.base || "";
+    // Boutons IA
+    buildAIButtons(fiche, finalPrompt);
 
-    (fiche.prompt?.variables || []).forEach(v => {
-      let replacement = "";
-
-      if (v.type === "geoloc") {
-        const lat = document.getElementById(`${v.id}_lat`)?.value || "";
-        const lon = document.getElementById(`${v.id}_lon`)?.value || "";
-        replacement = `${lat},${lon}`;
-      } else {
-        const el = document.querySelector(`[data-id="${v.id}"]`);
-        replacement = el?.value || "";
-      }
-
-      prompt = prompt.replaceAll(`{{${v.id}}}`, replacement);
-    });
-
-    const extra = extraInput?.value.trim() || "";
-    if (extra) {
-      prompt += `\n\nInformations complémentaires :\n${extra}`;
-    }
-
-    if (promptResult) promptResult.textContent = prompt;
-    buildAIButtons(fiche, prompt);
+    console.log("✅ Prompt compilé :", finalPrompt);
   };
 }
 
 if (btnCopyPrompt) {
   btnCopyPrompt.onclick = async () => {
-    const txt = promptResult?.textContent.trim();
-    if (!txt) {
-      alert("⚠️ Aucun prompt à copier");
+    const text = promptResult ? promptResult.textContent : "";
+    if (!text) {
+      alert("⚠️ Aucun prompt à copier.");
       return;
     }
-    
+
     try {
-      await navigator.clipboard.writeText(txt);
-      alert("✅ Prompt copié dans le presse-papiers.");
+      await navigator.clipboard.writeText(text);
+      alert("✅ Prompt copié dans le presse-papiers !");
     } catch (err) {
       console.error("❌ Erreur copie :", err);
       alert("❌ Impossible de copier le prompt.");
@@ -473,9 +359,9 @@ if (btnCopyPrompt) {
   };
 }
 
-// ------------------------------------------------------------------------
-// Boutons d'envoi vers les IA
-// ------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// BOUTONS D'ENVOI VERS LES IA
+// -----------------------------------------------------------------------
 function buildAIButtons(fiche, prompt) {
   if (!aiButtons) return;
   
@@ -523,6 +409,64 @@ function buildAIButtons(fiche, prompt) {
   mkBtn("Mistral",   levels.mistral,   "https://chat.mistral.ai/chat?q=");
 }
 
+// -----------------------------------------------------------------------
+// BOUTON RESET
+// -----------------------------------------------------------------------
+if (btnResetScan) {
+  btnResetScan.onclick = () => {
+    if (!confirm("🔄 Réinitialiser et scanner une nouvelle fiche ?")) {
+      return;
+    }
+
+    // Nettoyage
+    currentFiche = null;
+    window.currentFiche = null;
+
+    // Masquer sections
+    if (sectionMeta) sectionMeta.style.display = "none";
+    if (sectionVars) sectionVars.style.display = "none";
+    if (sectionExtra) sectionExtra.style.display = "none";
+    if (sectionPrompt) sectionPrompt.style.display = "none";
+
+    // Vider champs
+    if (metaHeader) metaHeader.innerHTML = "";
+    if (scanVariables) scanVariables.innerHTML = "";
+    if (extraInput) extraInput.value = "";
+    if (promptResult) {
+      promptResult.textContent = "";
+      promptResult.style.display = "none";
+    }
+    if (aiButtons) {
+      aiButtons.innerHTML = "";
+      aiButtons.style.display = "none";
+    }
+
+    // Masquer bouton reset
+    btnResetScan.style.display = "none";
+
+    // Cleanup scanner si actif
+    cleanupScanner().then(() => {
+      if (videoContainer) videoContainer.style.display = "none";
+      if (btnStartCam) btnStartCam.disabled = false;
+      if (btnStopCam) btnStopCam.disabled = true;
+    });
+
+    console.log("🔄 Interface réinitialisée");
+  };
+}
+
+// -----------------------------------------------------------------------
+// CHARGEMENT AUTOMATIQUE DEPUIS URL
+// -----------------------------------------------------------------------
 window.addEventListener("beforeunload", () => {
   cleanupScanner();
+});
+
+// Chargement auto si fiche en paramètre URL
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.autoLoadFiche) {
+    console.log("🔗 Chargement automatique de la fiche depuis URL");
+    onFicheDecoded(window.autoLoadFiche);
+    delete window.autoLoadFiche;
+  }
 });
