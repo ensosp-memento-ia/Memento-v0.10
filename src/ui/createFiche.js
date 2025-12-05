@@ -1,15 +1,14 @@
 // ======================================================================
 // createFiche.js — Module principal de l'onglet création de fiche IA RCH
-// VERSION FINALE CORRIGÉE : tous les imports présents
+// Version corrigée : ajout des indices IA + validation renforcée
 // ======================================================================
 
 import { initVariablesUI, getVariablesFromUI } from "./uiVariables.js";
 import { getMetaFromUI, resetMetaUI } from "./uiMeta.js";
-import { getPromptFromUI, resetPromptUI, initPromptUI } from "./uiPrompt.js";
+import { getPromptFromUI, resetPromptUI } from "./uiPrompt.js";
 import { resetConfidenceIndexes } from "./uiReset.js";
 import { encodeFiche } from "../core/compression.js";
 import { generateQrForFiche } from "../core/qrWriter.js";
-import { generateFicheUrl } from "../core/urlEncoder.js"; // ✅ IMPORT AJOUTÉ
 
 // ================================================================
 // INITIALISATION DE LA PAGE
@@ -27,9 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialise l'UI Variables
     initVariablesUI();
-
-    // ✅ Initialise l'UI Prompt
-    initPromptUI();
 
     // Bouton principal : Générer JSON + QR
     const btnGenerate = document.getElementById("btnGenerate");
@@ -96,7 +92,7 @@ async function onGenerate() {
     // Construction JSON final (AVEC indices IA)
     const fiche = {
         meta,
-        ai: aiIndices,
+        ai: aiIndices,  // ✅ CORRECTION : ajout des indices
         prompt: {
             base: prompt,
             variables: vars
@@ -111,14 +107,14 @@ async function onGenerate() {
         encoded = encodeFiche(fiche);
         console.log("📊 Stats compression :", encoded.stats);
 
-        // Vérification taille finale
+        // ⚠️ Vérification taille finale
         if (encoded.stats.base64 > 2900) {
-            const userConfirm = window.confirm(
+            const confirm = window.confirm(
                 `⚠️ Attention : QR volumineux (${encoded.stats.base64} caractères).\n` +
                 `Il pourrait être difficile à scanner.\n\n` +
                 `Voulez-vous continuer ?`
             );
-            if (!userConfirm) return;
+            if (!confirm) return;
         }
     }
     catch (err) {
@@ -136,17 +132,13 @@ async function onGenerate() {
             const result = generateQrForFiche(fiche, "qrContainer");
             console.log("🎉 QR généré ! Taille :", result.qrSize, "px");
             
-            // Message de succès
+            // Ajout d'un message de succès
             const successMsg = document.createElement("p");
             successMsg.style.color = "#1dbf65";
             successMsg.style.fontWeight = "600";
             successMsg.style.marginTop = "15px";
             successMsg.textContent = "✅ QR Code généré avec succès !";
             qrContainer.appendChild(successMsg);
-
-            // ✅ Génération du lien cliquable
-            generateClickableLink(fiche);
-
         }
         catch (err) {
             alert("❌ Erreur génération QR : " + err.message);
@@ -156,58 +148,13 @@ async function onGenerate() {
     }
 }
 
-// ================================================================
-// ✅ GÉNÉRATION LIEN CLIQUABLE
-// ================================================================
-function generateClickableLink(fiche) {
-    const linkContainer = document.getElementById("linkContainer");
-    const urlInput = document.getElementById("ficheUrl");
-    const btnCopy = document.getElementById("btnCopyLink");
-
-    if (!linkContainer || !urlInput) {
-        console.warn("⚠️ Conteneur lien non trouvé dans le DOM");
-        return;
-    }
-
-    try {
-        // ✅ Générer l'URL avec la fonction importée
-        const ficheUrl = generateFicheUrl(fiche);
-        
-        // Afficher le lien
-        urlInput.value = ficheUrl;
-        linkContainer.style.display = "block";
-
-        // Bouton copier
-        if (btnCopy) {
-            btnCopy.onclick = async () => {
-                try {
-                    await navigator.clipboard.writeText(ficheUrl);
-                    btnCopy.textContent = "✅ Lien copié !";
-                    setTimeout(() => {
-                        btnCopy.textContent = "📋 Copier le lien";
-                    }, 2000);
-                } catch (e) {
-                    console.error("❌ Erreur copie :", e);
-                    alert("❌ Impossible de copier : " + e.message);
-                }
-            };
-        }
-
-        console.log("🔗 Lien cliquable généré :", ficheUrl);
-
-    } catch (e) {
-        console.error("❌ Erreur génération lien :", e);
-        linkContainer.style.display = "none";
-    }
-}
-
 
 // ================================================================
 // RESET COMPLET
 // ================================================================
 function onReset() {
-    const userConfirm = window.confirm("⚠️ Voulez-vous vraiment tout réinitialiser ?");
-    if (!userConfirm) return;
+    const confirm = window.confirm("⚠️ Voulez-vous vraiment tout réinitialiser ?");
+    if (!confirm) return;
 
     console.log("🔄 Réinitialisation complète demandée");
 
@@ -220,15 +167,12 @@ function onReset() {
     // 3. Prompt
     resetPromptUI();
 
-    // 4. Indices IA
+    // 4. Indices IA → remise à 3
     resetConfidenceIndexes();
 
-    // 5. Nettoyer QR et lien
+    // 5. Nettoyer QR
     const qrContainer = document.getElementById("qrContainer");
     if (qrContainer) qrContainer.innerHTML = "";
-
-    const linkContainer = document.getElementById("linkContainer");
-    if (linkContainer) linkContainer.style.display = "none";
 
     // 6. Remettre la date du jour
     const dateField = document.getElementById("meta_date");
