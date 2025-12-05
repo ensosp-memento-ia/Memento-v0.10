@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+o<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -90,23 +90,12 @@
       text-align: center;
       cursor: pointer;
       transition: 0.2s;
-    }
-
-    .btn-create {
       background: #001F8F;
       color: white;
     }
-    .btn-create:hover {
-      background: #002bbf;
-    }
 
-    .btn-scan {
-      background: #e7ecff;
-      color: #001F8F;
-      border: 2px solid #001F8F;
-    }
-    .btn-scan:hover {
-      background: #dbe3ff;
+    .btn:hover {
+      background: #002bbf;
     }
 
     footer {
@@ -209,14 +198,16 @@
       L'IA peut faire des erreurs. Veuillez vérifier les réponses et exercer votre jugement professionnel avant toute action opérationnelle.
     </div>
     
-    <a href="scan.html" class="btn btn-scan">📷 Lire une fiche (Scan QR)</a>
+    <a href="scan.html" class="btn">📷 Lire une fiche (Scan QR Code)</a>
     
-    <a href="create.html" class="btn btn-create">📝 Créer une fiche IA</a>
+    <a href="create.html" class="btn">📝 Créer une fiche IA</a>
+
+    <a href="qr-to-url.html" class="btn">🔗 QR Code → URL (pour PDF)</a>
 
   </main>
 
   <footer>
-    © ENSOSP – Cne E. Fischer – Cdt A. Tirelle – V0.9
+    © ENSOSP – Cne E. Fischer – Cdt A. Tirelle – V0.10
   </footer>
 
 </body>

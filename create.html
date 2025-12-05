@@ -67,13 +67,16 @@
         <input id="meta_concepteur" type="text" placeholder="Ex : Cdt Tirelle">
       </label>
 
-      <label>Version
-        <input id="meta_version" type="text" placeholder="Ex : 1.0" value="1.0">
-      </label>
+      <!-- ✅ Version et Date sur même ligne -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <label>Version
+          <input id="meta_version" type="text" placeholder="Ex : 1.0" value="1.0">
+        </label>
 
-      <label>Date de mise à jour
-        <input id="meta_date" type="date">
-      </label>
+        <label>Date de mise à jour
+          <input id="meta_date" type="date">
+        </label>
+      </div>
     </section>
 
     <!-- ========================================================= -->
@@ -146,6 +149,23 @@
       <button id="btnGenerate" class="btn-generate">🚀 Générer JSON + QR code</button>
 
       <div id="qrContainer" class="qr-box"></div>
+
+      <!-- ✅ Nouveau : Génération de lien cliquable -->
+      <div id="linkContainer" style="margin-top:20px;display:none;">
+        <h3 style="color:#001F8F;font-size:16px;margin-bottom:10px;">🔗 Lien cliquable pour PDF</h3>
+        <input 
+          id="ficheUrl" 
+          type="text" 
+          readonly 
+          style="width:100%;padding:10px;border:2px solid #001F8F;border-radius:8px;font-size:13px;background:#f9f9f9;"
+          placeholder="Le lien apparaîtra ici..."
+        >
+        <button id="btnCopyLink" class="btn-add-var" style="margin-top:10px;">📋 Copier le lien</button>
+        <p style="font-size:13px;color:#666;margin-top:10px;">
+          💡 <b>Utilisation :</b> Collez ce lien dans votre PDF. Quand on clique dessus, la fiche s'ouvre automatiquement dans l'application.
+        </p>
+      </div>
+
     </section>
 
   </main>
