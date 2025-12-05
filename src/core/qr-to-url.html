@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR → URL | Mémento IA ENSOSP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Libs QR + Compression -->
+  <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+  <script type="module">
+    import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js";
+    window.QrScanner = QrScanner;
+  </script>
+</head>
+
+<body>
+
+  <nav class="tabs">
+    <a href="index.html" class="tab">🏠 Accueil</a>
+    <a href="scan.html" class="tab">📷 Lecture QR</a>
+    <a href="create.html" class="tab">📝 Création</a>
+    <a class="tab active">🔗 QR → URL</a>
+  </nav>
+
+  <main>
+    <h1 class="page-title">Convertir QR Code → URL cliquable</h1>
+
+    <div style="background:#e7f3ff;border-left:4px solid #001F8F;padding:12px 15px;margin-bottom:20px;border-radius:8px;">
+      <strong style="display:block;margin-bottom:5px;color:#001F8F;">💡 À quoi ça sert ?</strong>
+      Cette page vous permet de transformer un QR Code déjà créé en lien cliquable pour vos PDF.
+      Importez simplement l'image du QR Code et vous obtiendrez l'URL correspondante.
+    </div>
+
+    <!-- IMPORT QR -->
+    <section class="card">
+      <h2>1. Importer votre QR Code existant</h2>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block;margin-bottom:10px;font-weight:600;">
+          📁 Sélectionner l'image du QR Code
+        </label>
+        <input type="file" id="qrFileInput" accept="image/*" style="width:100%;">
+      </div>
+
+      <div id="previewContainer" style="display:none;margin-top:15px;text-align:center;">
+        <p style="font-weight:600;margin-bottom:10px;">Aperçu :</p>
+        <img id="qrPreview" style="max-width:300px;border:2px solid #ccc;border-radius:8px;">
+      </div>
+    </section>
+
+    <!-- RÉSULTAT -->
+    <section class="card" id="resultSection" style="display:none;">
+      <h2>2. URL cliquable générée ✅</h2>
+
+      <div style="background:#eef2ff;padding:15px;border-radius:10px;margin-bottom:15px;">
+        <label style="display:block;margin-bottom:8px;font-weight:600;color:#001F8F;">
+          🔗 Lien à utiliser dans votre PDF :
+        </label>
+        <input 
+          id="generatedUrl" 
+          type="text" 
+          readonly 
+          style="width:100%;padding:12px;border:2px solid #001F8F;border-radius:8px;font-size:14px;background:white;font-family:monospace;"
+        >
+        <button id="btnCopyUrl" class="btn-add-var" style="margin-top:10px;">
+          📋 Copier le lien
+        </button>
+      </div>
+
+      <div style="background:#f9f9f9;padding:15px;border-radius:10px;">
+        <h3 style="margin-top:0;color:#001F8F;font-size:15px;">📄 Comment l'utiliser dans un PDF :</h3>
+        <ol style="margin:10px 0;padding-left:20px;line-height:1.8;">
+          <li><strong>Word :</strong> Insérez votre image QR → Clic droit → Lien hypertexte → Collez l'URL</li>
+          <li><strong>Adobe Acrobat :</strong> Outils → Modifier PDF → Ajouter lien → Collez l'URL</li>
+          <li><strong>PowerPoint :</strong> Insérez le QR → Clic droit → Lien → Collez l'URL</li>
+        </ol>
+        <p style="margin:10px 0;padding:10px;background:#fff3cd;border-radius:6px;font-size:13px;">
+          <strong>💡 Résultat :</strong> Quand on clique sur le QR dans le PDF, la fiche s'ouvre directement dans l'application !
+        </p>
+      </div>
+
+      <!-- Test du lien -->
+      <div style="margin-top:15px;text-align:center;">
+        <button id="btnTestUrl" class="btn-generate" style="width:auto;padding:12px 24px;">
+          🔍 Tester le lien
+        </button>
+      </div>
+    </section>
+
+    <!-- INFO FICHE -->
+    <section class="card" id="infoSection" style="display:none;">
+      <h2>📋 Informations de la fiche</h2>
+      <div id="ficheInfo" style="background:#f5f7fb;padding:15px;border-radius:8px;font-size:14px;"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./src/ui/uiQrToUrl.js"></script>
+
+</body>
+</html>
