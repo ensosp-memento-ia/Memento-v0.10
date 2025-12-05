@@ -102,12 +102,42 @@ export function generateQrForFiche(fiche, containerId) {
       text: wrapperString,
       width: qrSize,
       height: qrSize,
-      correctLevel: QRCode.CorrectLevel.M,  // ✅ M pour meilleure correction d'erreur
+      correctLevel: QRCode.CorrectLevel.M,
       colorDark: "#000000",
       colorLight: "#ffffff"
     });
 
+    // ✅ CORRECTION FINALE : Afficher le canvas et supprimer l'image vide
+    setTimeout(() => {
+      const canvas = qrInner.querySelector('canvas');
+      const img = qrInner.querySelector('img');
+      
+      if (canvas) {
+        // Forcer le canvas visible
+        canvas.style.display = 'block';
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
+        console.log("✅ Canvas QR visible");
+      }
+      
+      if (img) {
+        // Supprimer l'image vide générée par QRCode.js
+        img.remove();
+        console.log("✅ Image vide supprimée");
+      }
+      
+      // Si pas de canvas, logger l'erreur
+      if (!canvas) {
+        console.error("❌ Canvas QR non trouvé !");
+      }
+    }, 200);  // ✅ Augmenté à 200ms pour laisser le temps à QRCode.js
+
     console.log("✅ QR Code généré avec succès");
+
+  } catch (e) {
+    console.error("❌ Erreur génération QR :", e);
+    throw new Error("Impossible de générer le QR Code : " + e.message);
+  }
 
   } catch (e) {
     console.error("❌ Erreur génération QR :", e);
